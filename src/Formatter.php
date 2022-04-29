@@ -2,8 +2,6 @@
 namespace Gpxcat\LaravelLogFormatter;
 
 use Auth;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Auth\Events\Authenticated;
 
 class Formatter
 {
@@ -29,21 +27,11 @@ class Formatter
                     $append[] = \Request::getClientIP();
                     // 記錄呼叫的路徑
                     $append[] = '/' . \Request::path();
-
-                    dd(auth());
-
-                    // dd(
-                    //     session_status(),
-                    //     PHP_SESSION_DISABLED,
-                    //     PHP_SESSION_NONE,
-                    //     PHP_SESSION_ACTIVE
-                    // );
-                    if (session_status() !== PHP_SESSION_DISABLED) {
-                        // 記錄登入狀態
-                        $append[] = Auth::user() ? Auth::user()->code : '[EMP-NOLOGIN]';
-                        // 記錄登入狀態
-                        // $append[] = Auth::guard('mobile_web')->user() ? Auth::guard('mobile_web')->user()->code : '[MEM-NOLOGIN]';
-                    }
+                    // 記錄登入狀態
+                    collect(config('auth.guards'))->each(function ($value, $key) use (&$append) {
+                        $auth = Auth::guard($key)->user();
+                        $append[] = '[' . strtoupper($key) . '-' . ($auth ? $auth->{($value['log_show_column'] ?? $auth->getKeyName())} : 'NOLOGIN') . ']';
+                    });
                 }
                 $appendStr = implode(' - ', $append);
 
