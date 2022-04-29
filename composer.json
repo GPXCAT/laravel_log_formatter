@@ -1,0 +1,21 @@
+{
+    "name": "gpxcat/laravel_log_formatter",
+    "description": "自製的 Laravel Log 格式化",
+    "type": "library",
+    "authors": [
+        {
+            "name": "John",
+            "email": "john.chang@starnic.com.tw"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "extra": {
+        "laravel": {}
+    },
+    "autoload": {
+        "psr-4": {
+            "Gpxcat\\LaravelLogFormatter\\": "src/"
+        }
+    }
+}
