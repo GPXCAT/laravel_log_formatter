@@ -29,7 +29,7 @@ class Formatter
                     $append[] = '/' . \Request::path();
                     // 記錄登入狀態
                     collect(config('auth.guards'))->each(function ($value, $key) use (&$append) {
-                        $auth = Auth::guard($key)->user();
+                        $auth = auth()->guard($key)->hasUser() ? Auth::guard($key)->user() : null;
                         $append[] = '[' . strtoupper($key) . '-' . ($auth ? $auth->{($value['log_show_column'] ?? $auth->getKeyName())} : 'NOLOGIN') . ']';
                     });
                 }
