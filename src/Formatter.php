@@ -15,24 +15,7 @@ class Formatter
     {
         foreach ($logger->getHandlers() as $handler) {
             $handler->pushProcessor(function ($record) {
-                if (strpos(php_sapi_name(), 'cli') !== false) {
-                    $append[] = 'CLI';
-                    // 執行序ID
-                    $append[] = getmypid();
-                    // 執行指令
-                    $append[] = implode(' ', $_SERVER['argv']);
-                } else {
-                    $append[] = 'WEB';
-                    // 記錄IP
-                    $append[] = \Request::getClientIP();
-                    // 記錄呼叫的路徑
-                    $append[] = '/' . \Request::path();
-                    // 記錄登入狀態
-                    collect(config('auth.guards'))->each(function ($value, $key) use (&$append) {
-                        $auth = auth()->guard($key)->hasUser() ? Auth::guard($key)->user() : null;
-                        $append[] = '[' . strtoupper($key) . '-' . ($auth ? $auth->{($value['log_show_column'] ?? $auth->getKeyName())} : 'NOLOGIN') . ']';
-                    });
-                }
+                $append = self::appendInfo();
                 $appendStr = implode(' - ', $append);
 
                 $record['message'] = $appendStr . ' - ' . $record['message'];
@@ -67,5 +50,30 @@ class Formatter
     private function ToLogStr($input)
     {
         return trim(preg_replace('/\s+/', ' ', preg_replace('/[\r\n\t\f\b]/', ' ', $input)));
+    }
+
+    public static function appendInfo()
+    {
+        $append = [];
+        if (strpos(php_sapi_name(), 'cli') !== false) {
+            $append[] = 'CLI';
+            // 執行序ID
+            $append[] = getmypid();
+            // 執行指令
+            $append[] = implode(' ', $_SERVER['argv']);
+        } else {
+            $append[] = 'WEB';
+            // 記錄IP
+            $append[] = \Request::getClientIP();
+            // 記錄呼叫的路徑
+            $append[] = '/' . \Request::path();
+            // 記錄登入狀態
+            collect(config('auth.guards'))->each(function ($value, $key) use (&$append) {
+                $auth = auth()->guard($key)->hasUser() ? Auth::guard($key)->user() : null;
+                $append[] = '[' . strtoupper($key) . '-' . ($auth ? $auth->{($value['log_show_column'] ?? $auth->getKeyName())} : 'NOLOGIN') . ']';
+            });
+        }
+
+        return $append;
     }
 }
