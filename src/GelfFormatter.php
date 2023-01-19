@@ -28,6 +28,10 @@ class GelfFormatter extends GelfMessageFormatter
         try {
             $ip = file_get_contents($filePath);
             if (!empty($ip)) {
+                $file_creation_date = filectime($filePath);
+                if ($file_creation_date < (time() - 86400)) {
+                    unlink($filePath);
+                }
                 return $ip;
             }
         } catch (ErrorException $e) {
