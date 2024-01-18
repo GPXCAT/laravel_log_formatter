@@ -2,6 +2,7 @@
 namespace Gpxcat\LaravelLogFormatter;
 
 use Auth;
+use Request;
 
 class Formatter
 {
@@ -16,9 +17,7 @@ class Formatter
         foreach ($logger->getHandlers() as $handler) {
             $handler->pushProcessor(function ($record) {
                 $append = self::appendInfo();
-                $appendStr = implode(' - ', $append);
-
-                $record['message'] = $appendStr . ' - ' . $record['message'];
+                $record['extra'] = $append;
 
                 // 如果是CLI的話直接印出Log
                 if (strpos(php_sapi_name(), 'cli') !== false) {
@@ -39,39 +38,40 @@ class Formatter
                         $color = array('', '');
                     }
 
-                    $record['message'] = $this->ToLogStr($record['message']);
-                    echo $color[0] . $record["level_name"] . ': ' . $record['message'] . $color[1] . "\n";
+                    echo $color[0] . $record["level_name"] . ': ' . $record['message'] . '  ' . json_encode($append) . $color[1] . "\n";
                 }
                 return $record;
             });
         }
     }
 
-    private function ToLogStr($input)
-    {
-        return trim(preg_replace('/\s+/', ' ', preg_replace('/[\r\n\t\f\b]/', ' ', $input)));
-    }
-
     public static function appendInfo()
     {
         $append = [];
         if (strpos(php_sapi_name(), 'cli') !== false) {
-            $append[] = 'CLI';
+            $append['type'] = 'CLI';
             // 執行序ID
-            $append[] = getmypid();
+            $append['pid'] = getmypid();
             // 執行指令
-            $append[] = implode(' ', $_SERVER['argv']);
+            $append['argv'] = $_SERVER['argv'];
         } else {
-            $append[] = 'WEB';
+            $append['type'] = 'WEB';
             // 記錄IP
-            $append[] = \Request::getClientIP();
+            $append['ip'] = Request::getClientIP();
             // 記錄呼叫的路徑
-            $append[] = '/' . \Request::path();
+            $append['path'] = '/' . Request::path();
             // 記錄登入狀態
-            collect(config('auth.guards'))->each(function ($value, $key) use (&$append) {
-                $auth = auth()->guard($key)->hasUser() ? Auth::guard($key)->user() : null;
-                $append[] = '[' . strtoupper($key) . '-' . ($auth ? $auth->{($value['log_show_column'] ?? $auth->getKeyName())} : 'NOLOGIN') . ']';
+            $guards = [];
+            collect(config('auth.guards'))->each(function ($value, $key) use (&$guards) {
+                $auth = auth()->guard($key)->user() ? Auth::guard($key)->user() : null;
+                if ($auth) {
+                    $guards[$key] = [$auth->getKeyName() => $auth->{$auth->getKeyName()}];
+                    if (isset($value['log_show_column'])) {
+                        $guards[$key][$value['log_show_column']] = $auth->{$value['log_show_column']};
+                    }
+                }
             });
+            $append['guards'] = $guards;
         }
 
         return $append;

@@ -11,13 +11,12 @@ class GelfFormatter extends GelfMessageFormatter
     /**
      * {@inheritdoc}
      */
-    public function format(array $record): Message
+    public function format($record): Message
     {
-        $append[] = env('APP_NAME');
-        $append[] = $this->getServerIp();
+        $append['app_name'] = env('APP_NAME');
+        $append['server_ip'] = $this->getServerIp();
         $append = array_merge($append, Formatter::appendInfo());
-        $appendStr = implode(' - ', $append);
-        $record['message'] = $appendStr . ' - ' . $record['message'];
+        $record['extra'] = $append;
         return parent::format($record);
     }
 
