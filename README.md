@@ -10,23 +10,31 @@ IFCONFIG_URL=http://10.1.1.188:8080/ip
 
 Add the config to your `config/logging.php` file:
 
-```
-'daily' => [
-    'driver' => 'daily',
-    'path' => storage_path('logs/laravel.log'),
-    'level' => env('LOG_LEVEL', 'debug'),
-    'days' => 14,
-    'tap' => [\Gpxcat\LaravelLogFormatter\Formatter::class],
+
+```php
+'stack' => [
+    'driver' => 'stack',
+    'channels' => ['daily', 'graylog'],
+    'ignore_exceptions' => true,
+    // ...
 ],
 ```
 
+```php
+'daily' => [
+    'driver' => 'daily',
+    // ...
+    'tap' => [\Gpxcat\LaravelLogFormatter\Formatter::class],
+    // ...
+],
 ```
+
+```php
 'graylog' => [
-    'driver' => 'monolog',
-    'handler' => \Monolog\Handler\GelfHandler::class,
-    'handler_with' => [
-        'publisher' => app(\Gpxcat\LaravelLogFormatter\GraylogSetup::class)->getGelfPublisher(),
-    ],
-    'formatter' => \Gpxcat\LaravelLogFormatter\GelfFormatter::class,
+    'driver' => 'custom',
+    'via' => \Gpxcat\LaravelLogFormatter\GraylogLogger::class,
+    'host' => env('GRAYLOG_URL', ''),
+    'port' => env('GRAYLOG_PORT', ''),
+    'level' => env('LOG_LEVEL', 'debug'),
 ],
 ```

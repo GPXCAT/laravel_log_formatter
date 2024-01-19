@@ -49,13 +49,13 @@ class Formatter
     {
         $append = [];
         if (strpos(php_sapi_name(), 'cli') !== false) {
-            $append['type'] = 'CLI';
+            $append['from'] = 'CLI';
             // 執行序ID
             $append['pid'] = getmypid();
             // 執行指令
             $append['argv'] = $_SERVER['argv'];
         } else {
-            $append['type'] = 'WEB';
+            $append['from'] = 'WEB';
             // 記錄IP
             $append['ip'] = Request::getClientIP();
             // 記錄呼叫的路徑
